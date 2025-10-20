@@ -14,10 +14,9 @@ static short audioBuffer[BUF_SIZE] = {0};
 static size_t bufIdx = 0;
 
 typedef struct {
+  float freq;
   float amplitude;
   const short *table;
   float idx;
-  // .delta = (freq*TABLE_SIZE)/SAMPLE_RATE
-  float delta;
 } Oscilator;
 

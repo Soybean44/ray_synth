@@ -1,13 +1,18 @@
 #include "common.h"
 #define WIDTH 800
 #define HEIGHT 600
+#define FPS 120
 #define NUM_TABLES 2
 const short *tables[NUM_TABLES] = {sineTable, sawTable};
 size_t currTable = 0;
-Oscilator osc = {.amplitude = 1.0,
-                 .table = sineTable,
-                 .idx = 0.0f,
-                 .delta = 440.0f * TABLE_SIZE / SAMPLE_RATE};
+
+Oscilator osc = {
+    .freq = 440.0f,
+    .amplitude = 1.0,
+    .table = sineTable,
+    .idx = 0.0f,
+};
+
 
 void updateBuffer(short *buffer, size_t size, Oscilator *osc) {
   for (size_t i = 0; i < size; i++) {
@@ -17,8 +22,11 @@ void updateBuffer(short *buffer, size_t size, Oscilator *osc) {
     short v0 = osc->table[idx_0];
     short v1 = osc->table[idx_1];
     float frac = osc->idx - (float)idx_0;
-    if ((osc->idx += osc->delta) > TABLE_SIZE)
+
+    osc->idx += osc->freq * (float)TABLE_SIZE / (float)SAMPLE_RATE;
+    if (osc->idx >= TABLE_SIZE)
       osc->idx -= (float)TABLE_SIZE;
+
     buffer[i] = osc->amplitude * (v0 + frac * (v1 - v0));
   }
 }
@@ -36,36 +44,40 @@ void audioCallback(void *bufferData, unsigned int frames) {
 
 int main(void) {
   InitWindow(WIDTH, HEIGHT, "ray-dsp");
-  SetTargetFPS(60);
+  SetTargetFPS(FPS);
 
   // generate first buffers
   short visBuffer[WIDTH];
+  Oscilator visOsc = osc;
   updateBuffer(audioBuffer, BUF_SIZE, &osc);
-  updateBuffer(visBuffer, WIDTH, &osc);
+  updateBuffer(visBuffer, WIDTH, &visOsc);
 
   // Initialize audio
   InitAudioDevice();
   AudioStream stream = LoadAudioStream(SAMPLE_RATE, 16, 1);
-  SetAudioStreamBufferSizeDefault(BUF_SIZE);
   SetAudioStreamVolume(stream, 0.35);
   SetAudioStreamCallback(stream, audioCallback);
+
   PlayAudioStream(stream);
 
   Vector2 mousePosition = {0};
-
   while (!WindowShouldClose()) {
     mousePosition = GetMousePosition();
+
     if (IsMouseButtonPressed(MOUSE_BUTTON_RIGHT)) {
       currTable = (currTable + 1) % NUM_TABLES;
       osc.table = tables[currTable];
-      updateBuffer(visBuffer, WIDTH, &osc);
+      visOsc.table = tables[currTable];
+      updateBuffer(visBuffer, WIDTH, &visOsc);
     }
     if (IsMouseButtonDown(MOUSE_BUTTON_LEFT)) {
       float fp = (float)(600 - mousePosition.y);
       float freq = 40.0f + fp;
-      osc.delta = freq * TABLE_SIZE / SAMPLE_RATE;
-      updateBuffer(visBuffer, WIDTH, &osc);
+      osc.freq = freq;
+      visOsc.freq = freq;
+      updateBuffer(visBuffer, WIDTH, &visOsc);
     }
+
     BeginDrawing();
     ClearBackground(BLACK);
     for (size_t x = 0; x < WIDTH; x++) {

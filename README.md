@@ -1,6 +1,11 @@
 # Ray Synth
 Exploring how digital synthesis and audio works through real-time audio in Raylib
 
+## How does it work?
+Currently we use Wavetable Synthesis to generate the Audio Signal. The benefit of this is the signal itself is pre-computed. The wavetable itself is a 1Hz wave, We then essentially squash that 1Hz wave by sampling that wave at a different sample rate, defined by our target frequency. The most calculation this requires is linear interpolation between our samples, which is not very expensive.
+
+The benefit of wavetable synthesis, is that you can easily add your own waveforms trivially. Create an array of samples that represents your waveform over one period, Then set the oscillator table to your wavetable. The sky is the limit for all the different waveforms you want to use.
+
 ## Building
 The libraries used are Raylib, which is loaded in through pkg-config. Ensure you have both installed and configured correctly to build the program. 
 
@@ -10,3 +15,5 @@ The build system works in two steps. First, it builds `gen.c` then it runs that 
 ## Running
 
 As of right now, when running the synth, clicking on the window at a given y sets the frequency of the oscillator. Right clicking switches the table 
+
+

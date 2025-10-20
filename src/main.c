@@ -1,6 +1,6 @@
 #include "common.h"
-#define WIDTH 800
-#define HEIGHT 600
+#define WIDTH 1600
+#define HEIGHT 900
 #define FPS 120
 #define NUM_TABLES 2
 const short *tables[NUM_TABLES] = {sineTable, sawTable};
@@ -71,8 +71,9 @@ int main(void) {
       updateBuffer(visBuffer, WIDTH, &visOsc);
     }
     if (IsMouseButtonDown(MOUSE_BUTTON_LEFT)) {
-      float fp = (float)(600 - mousePosition.y);
-      float freq = 40.0f + fp;
+      float fp = (float)(HEIGHT - mousePosition.y);
+      // Max freq is half of width to prevent aliasing on visualization
+      float freq = (40.0f + fp)*WIDTH/(HEIGHT*2);
       osc.freq = freq;
       visOsc.freq = freq;
       updateBuffer(visBuffer, WIDTH, &visOsc);
@@ -81,7 +82,7 @@ int main(void) {
     BeginDrawing();
     ClearBackground(BLACK);
     for (size_t x = 0; x < WIDTH; x++) {
-      DrawPixel(x, HEIGHT / 2 + HEIGHT * visBuffer[x] / 64000, RED);
+      DrawPixel(x, HEIGHT / 2 + HEIGHT * visBuffer[x/2] / 64000, RED);
     }
     EndDrawing();
   }

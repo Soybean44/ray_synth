@@ -14,6 +14,5 @@ The build system works in two steps. First, it builds `gen.c` then it runs that 
 
 ## Running
 
-As of right now, when running the synth, clicking on the window at a given y sets the frequency of the oscillator. Right clicking switches the table 
-
+As of right now, when running the synth, it creates a virtual midi output through portmidi. You can connect this to any midi input through software such as qjackctl (assuming you're using pipewire, pipewire-alsa, and pipewire-jack). Then midi input should correspond to midi output from the synth.
 

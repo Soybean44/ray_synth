@@ -1,4 +1,7 @@
 #include "common.h"
+#define RAYGUI_IMPLEMENTATION
+#include "raygui.h"
+
 #define WIDTH 1600
 #define HEIGHT 900
 #define FPS 120
@@ -46,6 +49,7 @@ int main(void) {
   InitWindow(WIDTH, HEIGHT, "ray-dsp");
   SetTargetFPS(FPS);
 
+  midi_init();
   // generate first buffers
   short visBuffer[WIDTH];
   Oscilator visOsc = osc;
@@ -60,22 +64,28 @@ int main(void) {
 
   PlayAudioStream(stream);
 
-  Vector2 mousePosition = {0};
+  MidiEvent prev_event = {-1};
+  // Vector2 mousePosition = {0};
   while (!WindowShouldClose()) {
-    mousePosition = GetMousePosition();
+    // mousePosition = GetMousePosition();
 
+    MidiEvent event = get_midi_event();
     if (IsMouseButtonPressed(MOUSE_BUTTON_RIGHT)) {
       currTable = (currTable + 1) % NUM_TABLES;
       osc.table = tables[currTable];
       visOsc.table = tables[currTable];
       updateBuffer(visBuffer, WIDTH, &visOsc);
     }
-    if (IsMouseButtonDown(MOUSE_BUTTON_LEFT)) {
-      float fp = (float)(HEIGHT - mousePosition.y);
-      // Max freq is half of width to prevent aliasing on visualization
-      float freq = (40.0f + fp)*WIDTH/(HEIGHT*2);
-      osc.freq = freq;
-      visOsc.freq = freq;
+    if (event.on == 1) {
+      osc.freq = event.freq;
+      osc.amplitude = (float)event.vel / 127.0f;
+      visOsc.freq = event.freq;
+      visOsc.amplitude = (float)event.vel / 127.0f;
+      updateBuffer(visBuffer, WIDTH, &visOsc);
+      prev_event = event;
+    } else if (event.on == 0 && event.note == prev_event.note) {
+      osc.amplitude = 0.0f;
+      visOsc.amplitude = 0.0f;
       updateBuffer(visBuffer, WIDTH, &visOsc);
     }
 
@@ -89,6 +99,7 @@ int main(void) {
 
   UnloadAudioStream(stream);
   CloseAudioDevice();
+  midi_terminate();
   CloseWindow();
   return 0;
 }

@@ -7,6 +7,7 @@
 #include <string.h>
 
 #include "gen.h"
+#include "midi.h"
 
 #define SAMPLE_RATE 44100
 #define BUF_SIZE 512
